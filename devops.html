@@ -1,0 +1,540 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps × Suits</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+background:#080809;color:#f5f5f5;
+font-family:Arial,Helvetica,sans-serif;
+overflow-x:hidden
+}
+body.intro-active{overflow:hidden}
+a{text-decoration:none;color:inherit}
+/* ================= INTRO ================= */
+.intro{
+position:fixed;inset:0;z-index:99999;
+background:radial-gradient(circle at center,#171719 0%,#080809 55%,#050506 100%);
+display:flex;justify-content:center;align-items:center;
+transition:opacity .9s ease,visibility .9s ease
+}
+.intro.hide{opacity:0;visibility:hidden;pointer-events:none}
+.intro::before{
+content:"";position:absolute;inset:0;
+background-image:
+linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+background-size:45px 45px;
+mask-image:linear-gradient(to bottom,transparent,black 20%,black 80%,transparent)
+}
+/* ================= TERMINAL ================= */
+.intro-terminal{
+position:relative;width:min(850px,88vw);
+background:#0c0c0e;border:1px solid #29292d;border-radius:12px;
+overflow:hidden;
+box-shadow:0 30px 100px rgba(0,0,0,.6),0 0 70px rgba(214,168,79,.05);
+animation:terminalAppear .9s ease forwards
+}
+@keyframes terminalAppear{
+from{opacity:0;transform:scale(.94) translateY(25px)}
+to{opacity:1;transform:scale(1) translateY(0)}
+}
+.terminal-bar{
+height:45px;display:flex;align-items:center;padding:0 18px;
+border-bottom:1px solid #242428;background:#101012
+}
+.dot{width:10px;height:10px;border-radius:50%;margin-right:7px;background:#555}
+.terminal-title{margin-left:15px;font-family:monospace;font-size:12px;color:#68686e}
+.terminal-body{padding:35px;font-family:"Courier New",monospace}
+.command-line{color:#dcdcdc;font-size:14px;min-height:22px}
+.prompt{color:#d6a84f}
+.cursor{
+display:inline-block;width:8px;height:17px;background:#d6a84f;
+margin-left:4px;animation:blink .8s infinite
+}
+@keyframes blink{50%{opacity:0}}
+/* ================= PIPELINE ================= */ .pipeline{
+margin-top:35px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px
+}
+.pipeline-step{
+position:relative;border:1px solid #29292d;padding:20px 15px;
+background:#101012;opacity:.35;transform:translateY(10px);
+transition:opacity .5s ease,transform .5s ease,border-color .5s ease
+}
+.pipeline-step.active{
+opacity:1;transform:translateY(0);border-color:#d6a84f;
+box-shadow:0 0 25px rgba(214,168,79,.08)
+}
+.pipeline-step.done{opacity:1;border-color:#526d58}
+.step-number{color:#555;font-size:11px;margin-bottom:12px}
+.pipeline-step.active .step-number,
+.pipeline-step.done .step-number{color:#d6a84f}
+.step-name{font-size:14px;font-weight:bold}
+.step-status{margin-top:8px;color:#777;font-size:11px}
+.pipeline-step.done .step-status{color:#7ee787}
+/* ================= DEPLOY MESSAGE ================= */
+.deploy-message{
+margin-top:30px;text-align:center;opacity:0;transform:translateY(15px);
+transition:opacity .6s ease,transform .6s ease
+}
+.deploy-message.show{opacity:1;transform:translateY(0)}
+.deploy-message h2{font-size:clamp(25px,4vw,45px);letter-spacing:2px}
+.deploy-message h2 span{color:#d6a84f}
+.deploy-message p{margin-top:8px;color:#7ee787;font-size:11px;letter-spacing:3px}
+/* ================= BROWSER REVEAL ================= */
+.browser-preview{
+position:absolute;width:min(1000px,92vw);height:min(620px,72vh);
+background:#0b0b0d;border:1px solid #333;border-radius:14px;overflow:hidden;
+opacity:0;transform:scale(.75) translateY(60px);pointer-events:none
+}
+.browser-preview.show{
+animation:browserReveal 1s cubic-bezier(.2,.8,.2,1) forwards
+}
+@keyframes browserReveal{
+to{opacity:1;transform:scale(1) translateY(0)}
+}
+.browser-top{
+height:38px;background:#151518;border-bottom:1px solid #29292d;
+display:flex;align-items:center;padding:0 14px
+}
+.browser-dots{display:flex;gap:6px}
+.browser-dots span{width:8px;height:8px;border-radius:50%;background:#555}
+.address{
+margin-left:20px;background:#0c0c0e;border:1px solid #29292d;border-radius:5px;
+padding:5px 15px;font-family:monospace;font-size:10px;color:#777;flex:1
+}
+.browser-content{
+height:calc(100% - 38px);display:flex;align-items:center;justify-content:center;
+text-align:center;
+background:radial-gradient(circle at 75% 35%,rgba(214,168,79,.12),transparent 30%),#09090a
+}
+.browser-content small{color:#d6a84f;letter-spacing:4px}
+.browser-content h1{margin-top:15px;font-size:clamp(40px,7vw,90px);line-height:.9}
+.browser-content h1 span{color:#d6a84f}
+/* ================= SKIP ================= */ .skip-intro{
+position:fixed;bottom:25px;right:30px;z-index:100000;
+background:transparent;color:#777;border:1px solid #29292d;
+padding:9px 15px;font-size:11px;cursor:pointer;transition:.3s
+}
+.skip-intro:hover{color:#d6a84f;border-color:#d6a84f}
+/* ================= NAVBAR ================= */
+nav{
+position:fixed;top:0;width:100%;z-index:1000;
+display:flex;justify-content:space-between;align-items:center;
+padding:20px 7%;background:rgba(8,8,9,.82);
+backdrop-filter:blur(15px);border-bottom:1px solid #29292d
+}
+.logo{font-size:22px;font-weight:800;letter-spacing:2px}
+.logo span{color:#d6a84f}
+.nav-links{display:flex;gap:30px;list-style:none}
+.nav-links a{color:#aaa;font-size:14px;transition:.3s}
+.nav-links a:hover{color:#d6a84f}
+/* ================= HERO ================= */
+.hero{
+min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+padding:140px 8% 80px;
+background:radial-gradient(circle at 80% 30%,rgba(214,168,79,.13),transparent 35%)
+}
+.hero-tag{color:#d6a84f;letter-spacing:4px;font-size:12px;margin-bottom:20px}
+.hero h1{
+max-width:900px;font-size:clamp(55px,9vw,120px);line-height:.9;
+letter-spacing:-5px;text-transform:uppercase
+}
+.hero h1 span{color:#d6a84f}
+.hero p{max-width:650px;margin-top:30px;color:#999;font-size:18px}
+.hero-buttons{display:flex;gap:15px;margin-top:35px}
+.btn{
+padding:14px 25px;border:1px solid #d6a84f;cursor:pointer;
+font-weight:bold;transition:.3s
+}
+.btn-primary{background:#d6a84f;color:#080809}
+.btn-primary:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(214,168,79,.15)}
+.btn-secondary{color:#d6a84f}
+.btn-secondary:hover{background:#d6a84f;color:#080809}
+/* ================= SECTIONS ================= */
+section{padding:100px 8%}
+.section-label{color:#d6a84f;letter-spacing:3px;font-size:12px;margin-bottom:15px}
+.section-title{font-size:clamp(35px,5vw,65px);line-height:1;margin-bottom:50px}
+/* ================= ABOUT ================= */
+.about{
+display:grid;grid-template-columns:1fr 1fr;gap:70px;background:#111114
+}
+.about-text p{color:#999;font-size:17px;max-width:600px}
+.about-box{border:1px solid #29292d;padding:40px;background:#09090a}
+.about-box h3{color:#d6a84f;margin-bottom:15px}
+/* ================= DOMAINS ================= */
+.services{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.service-card{
+padding:30px;border:1px solid #29292d;background:#111114;transition:.3s
+}
+.service-card:hover{transform:translateY(-8px);border-color:#d6a84f} .service-number{color:#d6a84f;font-size:12px}
+.service-card h3{margin:25px 0 12px;font-size:23px}
+.service-card p{color:#888}
+/* ================= TEAM ================= */
+.team{background:#111114}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.member{
+padding:25px;border:1px solid #29292d;background:#09090a;transition:.3s
+}
+.member:hover{transform:translateY(-7px);border-color:#d6a84f}
+.member-image{
+height:220px;display:flex;justify-content:center;align-items:center;
+background:#18181b;color:#d6a84f;font-size:45px;font-weight:bold;margin-bottom:20px
+}
+.member p{color:#d6a84f;font-size:13px}
+/* ================= CASES ================= */
+.case{padding:45px 0;border-top:1px solid #29292d}
+.case-header{display:flex;justify-content:space-between;gap:30px}
+.case-number{color:#d6a84f;font-size:12px}
+.case h3{font-size:35px;margin:12px 0}
+.case p{color:#888;max-width:650px}
+/* ================= CTA ================= */
+.cta{text-align:center;padding:130px 8%;background:#111114}
+.cta h2{font-size:clamp(45px,7vw,85px);line-height:.9;margin-bottom:25px}
+.cta p{color:#888;margin-bottom:35px}
+/* ================= FOOTER ================= */
+footer{
+padding:30px 8%;display:flex;justify-content:space-between;
+border-top:1px solid #29292d;color:#666;font-size:13px
+}
+/* ================= MOBILE ================= */
+@media(max-width:900px){
+.nav-links{display:none}
+.about{grid-template-columns:1fr}
+.services,.team-grid{grid-template-columns:repeat(2,1fr)}
+.pipeline{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+.hero h1{letter-spacing:-2px}
+.services,.team-grid,.pipeline{grid-template-columns:1fr}
+.hero-buttons{flex-direction:column;width:fit-content}
+.case-header{flex-direction:column}
+footer{flex-direction:column;gap:10px}
+.terminal-body{padding:22px}
+.browser-preview{height:60vh}
+}
+@media(prefers-reduced-motion:reduce){
+*,*::before,*::after{
+animation-duration:.01ms!important;
+animation-iteration-count:1!important;
+transition-duration:.01ms!important
+}
+}
+</style>
+</head>
+<body class="intro-active"> <!-- ================= OPENING ANIMATION ================= -->
+<div class="intro" id="intro">
+<div class="intro-terminal">
+<div class="terminal-bar">
+<div class="dot"></div>
+<div class="dot"></div>
+<div class="dot"></div>
+<div class="terminal-title">devops-pipeline / production</div>
+</div>
+<div class="terminal-body">
+<div class="command-line">
+<span class="prompt">manvi@devops:~$</span>
+<span id="typedCommand"></span>
+<span class="cursor"></span>
+</div>
+<div class="pipeline">
+<div class="pipeline-step" id="build">
+<div class="step-number">01</div>
+<div class="step-name">BUILD</div>
+<div class="step-status">waiting...</div>
+</div>
+<div class="pipeline-step" id="test">
+<div class="step-number">02</div>
+<div class="step-name">TEST</div>
+<div class="step-status">waiting...</div>
+</div>
+<div class="pipeline-step" id="security">
+<div class="step-number">03</div>
+<div class="step-name">VERIFY</div>
+<div class="step-status">waiting...</div>
+</div>
+<div class="pipeline-step" id="deploy">
+<div class="step-number">04</div>
+<div class="step-name">DEPLOY</div>
+<div class="step-status">waiting...</div>
+</div>
+</div>
+<div class="deploy-message" id="deployMessage">
+<h2>DEPLOYMENT <span>SUCCESSFUL</span></h2>
+<p>PRODUCTION SYSTEM ONLINE</p>
+</div>
+</div>
+</div>
+<!-- Browser appears after successful deployment -->
+<div class="browser-preview" id="browser">
+<div class="browser-top"> <div class="browser-dots">
+<span></span><span></span><span></span>
+</div>
+<div class="address">devops-x-suits.local</div>
+</div>
+<div class="browser-content">
+<div>
+<small>DEVOPS BU • 2026</small>
+<h1>BUILD.<br>DEPLOY.<br><span>DEFEND.</span></h1>
+</div>
+</div>
+</div>
+<button class="skip-intro" id="skipIntro">SKIP INTRO →</button>
+</div>
+<!-- ================= NAVBAR ================= -->
+<nav>
+<div class="logo">D<span>×</span>S</div>
+<ul class="nav-links">
+<li><a href="#about">About</a></li>
+<li><a href="#domains">Domains</a></li>
+<li><a href="#team">Team</a></li>
+<li><a href="#cases">Cases</a></li>
+</ul>
+</nav>
+<!-- ================= HERO ================= -->
+<header class="hero">
+<div class="hero-tag">DEVOPS BU • BATCH 2026</div>
+<h1>Build.<br>Deploy.<br><span>Defend.</span></h1>
+<p>
+DevOps × Suits is a student-driven technology club
+where engineering meets strategy, automation meets
+creativity, and ideas become working systems.
+</p>
+<div class="hero-buttons">
+<a href="#about" class="btn btn-primary">Explore the Club</a>
+<a href="#team" class="btn btn-secondary">Meet the Team</a>
+</div>
+</header>
+<!-- ================= ABOUT ================= -->
+<section class="about" id="about">
+<div class="about-text">
+<div class="section-label">01 / THE FIRM</div>
+<h2 class="section-title"> More than<br>a coding club.
+</h2>
+<p>
+We create an environment where students learn
+modern software practices by building real
+projects, experimenting with cloud technologies
+and collaborating as engineering teams.
+</p>
+</div>
+<div class="about-box">
+<h3>OUR MISSION</h3>
+<p>
+Turn curious students into builders who can
+understand a problem, write the solution,
+automate the process and ship the product.
+</p>
+</div>
+</section>
+<!-- ================= DOMAINS ================= -->
+<section id="domains">
+<div class="section-label">02 / PRACTICE AREAS</div>
+<h2 class="section-title">What we build.</h2>
+<div class="services">
+<div class="service-card">
+<div class="service-number">01</div>
+<h3>CI/CD</h3>
+<p>Automate the journey from code commit to testing and deployment.</p>
+</div>
+<div class="service-card">
+<div class="service-number">02</div>
+<h3>Cloud</h3>
+<p>Explore cloud infrastructure and learn how modern applications scale.</p>
+</div>
+<div class="service-card">
+<div class="service-number">03</div>
+<h3>Containers</h3>
+<p>Learn how Docker and containerized environments simplify deployment.</p>
+</div>
+<div class="service-card">
+<div class="service-number">04</div>
+<h3>Automation</h3>
+<p>Replace repetitive processes with reliable automated workflows.</p>
+</div>
+</div>
+</section>
+<!-- ================= TEAM ================= --> <section class="team" id="team">
+<div class="section-label">03 / THE TEAM</div>
+<h2 class="section-title">
+Meet the people<br>behind the builds.
+</h2>
+<div class="team-grid">
+<div class="member">
+<div class="member-image">AM</div>
+<h3>Arjun Mehta</h3>
+<p>Club President</p>
+</div>
+<div class="member">
+<div class="member-image">RS</div>
+<h3>Riya Sharma</h3>
+<p>DevOps Lead</p>
+</div>
+<div class="member">
+<div class="member-image">KS</div>
+<h3>Kabir Singh</h3>
+<p>Cloud Lead</p>
+</div>
+<div class="member">
+<div class="member-image">AG</div>
+<h3>Ananya Gupta</h3>
+<p>Frontend Lead</p>
+</div>
+</div>
+</section>
+<!-- ================= CASES ================= -->
+<section id="cases">
+<div class="section-label">04 / CASE FILES</div>
+<h2 class="section-title">Problems worth solving.</h2>
+<div class="case">
+<div class="case-header">
+<div>
+<div class="case-number">CASE #001</div>
+<h3>The 3AM Deployment</h3>
+<p>
+A student project needs a reliable deployment
+pipeline before its final demonstration.
+</p>
+</div>
+<strong>ACTIVE</strong>
+</div>
+</div>
+<div class="case">
+<div class="case-header"> <div>
+<div class="case-number">CASE #002</div>
+<h3>Operation: Zero Downtime</h3>
+<p>
+A growing application needs better
+infrastructure and monitoring.
+</p>
+</div>
+<strong>OPEN</strong>
+</div>
+</div>
+</section>
+<!-- ================= CTA ================= -->
+<section class="cta">
+<h2>Ready to<br>ship?</h2>
+<p>Don't just write code. Build systems.</p>
+<button class="btn btn-primary" id="joinButton">
+Join the Club
+</button>
+</section>
+<footer>
+<div>DEVOPS × SUITS</div>
+<div>Built for builders • 2026</div>
+</footer>
+<script>
+/* ================= INTRO ANIMATION ================= */
+const intro = document.getElementById("intro");
+const typedCommand = document.getElementById("typedCommand");
+const browser = document.getElementById("browser");
+const deployMessage = document.getElementById("deployMessage");
+const skipButton = document.getElementById("skipIntro");
+const command = "git push origin main";
+let index = 0;
+/* Type command */
+function typeCommand(){
+if(index < command.length){
+typedCommand.textContent += command.charAt(index);
+index++;
+setTimeout(typeCommand,55);
+}else{ startPipeline();
+}
+}
+/* Activate each pipeline step */
+function activateStep(id,delay){
+setTimeout(function(){
+const step = document.getElementById(id);
+step.classList.add("active");
+const status = step.querySelector(".step-status");
+status.textContent = "running...";
+setTimeout(function(){
+step.classList.remove("active");
+step.classList.add("done");
+status.textContent = "✓ passed";
+},650);
+},delay);
+}
+/* Start pipeline */
+function startPipeline(){
+activateStep("build",300);
+activateStep("test",1100);
+activateStep("security",1900);
+activateStep("deploy",2700);
+setTimeout(function(){
+deployMessage.classList.add("show");
+},3400);
+setTimeout(function(){
+showBrowser();
+},4300);
+}
+/* Browser reveal */ function showBrowser(){
+const terminal =
+document.querySelector(".intro-terminal");
+terminal.style.opacity = "0";
+terminal.style.transform = "scale(.85)";
+browser.classList.add("show");
+setTimeout(function(){
+finishIntro();
+},1200);
+}
+/* Finish intro */
+function finishIntro(){
+intro.classList.add("hide");
+document.body.classList.remove("intro-active");
+}
+/* Skip */
+skipButton.addEventListener("click",finishIntro);
+/* Start after page loads */
+window.addEventListener("load",function(){
+setTimeout(typeCommand,600);
+});
+/* ================= NAVBAR ================= */
+const navbar = document.querySelector("nav");
+window.addEventListener("scroll",function(){
+if(window.scrollY > 50){
+navbar.style.background = "rgba(8,8,9,.97)";
+}else{
+navbar.style.background = "rgba(8,8,9,.82)";
+}
+}); /* ================= JOIN BUTTON ================= */
+const joinButton =
+document.getElementById("joinButton");
+joinButton.addEventListener("click",function(){
+alert(
+"Applications for DevOps × Suits are opening soon."
+);
+});
+/* ================= SCROLL REVEAL ================= */
+const revealElements =
+document.querySelectorAll(
+".service-card,.member,.case"
+);
+const observer =
+new IntersectionObserver(
+function(entries){
+entries.forEach(function(entry){
+if(entry.isIntersecting){
+entry.target.style.opacity = "1";
+entry.target.style.transform =
+"translateY(0)";
+}
+});
+},
+{threshold:.15}
+);
+revealElements.forEach(function(element){
+element.style.opacity = "0";
+element.style.transform =
+"translateY(30px)";
+element.style.transition =
+"opacity .6s ease,transform .6s ease";
+observer.observe(element);
+});
+</script>
+</body>
+</html>
